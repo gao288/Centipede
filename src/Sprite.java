@@ -41,13 +41,19 @@ public class Sprite {
         return y;
     }
 
+    public void setXY(int x,int y){
+        this.x = x;
+        this.y = y;
+
+    }
+
     public boolean isVisible() {
         return visible;
     }
     public int getWidth(){
         return width;
     }
-    public int getLength(){
+    public int getHeight(){
         return height;
     }
     public void setVisible(Boolean visible) {

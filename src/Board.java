@@ -58,6 +58,7 @@ public class Board extends JPanel implements Commons{
                     }
                     updateSpaceShip();
                     updateMissiles();
+                    updateCentipede();
                     repaint();
                     //System.out.println(mousePressed);
 
@@ -75,10 +76,10 @@ public class Board extends JPanel implements Commons{
     private void initCentipede(){
             centipede = new ArrayList<>();
             for(int i = 0; i< CENTIPEDE_SIZE; i++){
-                if(i == 0){
-                    centipede.add(new Alien(BOARD_WIDTH-Alien.getWidth(),0));
-                }
+                centipede.add(new Alien(BOARD_WIDTH,0));
             }
+            Alien alien = centipede.get(0);
+            alien.setXY(BOARD_WIDTH-50, 0);
 
     }
 
@@ -117,14 +118,13 @@ public class Board extends JPanel implements Commons{
             g2d.drawImage(missile.getImage(), missile.getX(),
                     missile.getY(), this);
         }
+        for (Alien alien : centipede) {
+            g2d.drawImage(alien.getImage(),alien.getX(),alien.getY(),this);
+            //g2d.drawImage(alien.getImage(),250,250,this);
+        }
     }
 
-//    @Override
-//    public void actionPerformed(ActionEvent e){
-//        updateMissiles();
-//        updateSpaceShip();
-//        repaint();
-//    }
+
     private void updateMissiles() {
 
         List<Missile> missiles = spaceShip.getMissiles();
@@ -139,6 +139,46 @@ public class Board extends JPanel implements Commons{
                 missiles.remove(i);
             }
         }
+    }
+    private void updateCentipede(){
+        for(int i = 1; i< centipede.size();i++){
+            Alien alien_after = centipede.get(i-1);
+            Alien alien_forward = centipede.get(i);
+            alien_after.setXY(alien_forward.getX(), alien_forward.getY());
+        }
+        Alien head = centipede.get(0);
+        int[] next_pos = next_pos(head);
+        head.setXY(next_pos[0],next_pos[1]);
+
+    }
+
+    private int[] next_pos(Alien alien){
+        int[] ret= {alien.getX(),alien.getY()};
+        if(alien.getY() >= PLAYERMAT - alien.getHeight()/2){
+            //Reaching the player mat bottom line
+            if(alien.getX()<=(0+alien.getWidth()/2)){
+                alien.direction = 1;
+                ret[0] += alien.speed;
+            }else if(alien.getX()>=(BOARD_WIDTH - alien.getWidth()/2)){
+                alien.direction = 0;
+                ret[0] -= alien.speed;
+            }
+
+        }else if(alien.getX()<=(0+alien.getWidth()/2)){
+            alien.direction = 1;
+            ret[1] += alien.getHeight();
+        }else if(alien.getX()>=(BOARD_WIDTH - alien.getWidth()/2)){
+            alien.direction = 0;
+            ret[1] += alien.getHeight();
+        }else{
+            if(alien.direction == 1){
+                ret[0] += alien.speed;
+            }else{
+                ret[0] -= alien.speed;
+            }
+        }
+
+        return ret;
     }
 
     private void updateSpaceShip() {

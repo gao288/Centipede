@@ -2,8 +2,8 @@ import java.util.ArrayList;
 
 public class Alien extends Sprite implements Commons{
     private int health = 2;
-    private int speed = 5;
-    private int direction = 0; // 0 means going left
+    public int speed = 5;
+    public int direction = 0; // 0 means going left
     private boolean head = false;
 
     Alien(int x, int y){
