@@ -19,10 +19,6 @@ public class SpaceShip extends Sprite {
         getImageDimensions();
     }
 
-//    public void move() {
-//        x += dx;
-//        y += dy;
-//    }
 
     public void mousemove(int mx, int my){
         x = mx;
@@ -34,54 +30,10 @@ public class SpaceShip extends Sprite {
     }
 
 
-//    public void keyPressed(KeyEvent e) {
-//
-//        int key = e.getKeyCode();
-//
-//        if (key == KeyEvent.VK_SPACE) {
-//            fire();
-//        }
-//
-//        if (key == KeyEvent.VK_LEFT) {
-//            dx = -1;
-//        }
-//
-//        if (key == KeyEvent.VK_RIGHT) {
-//            dx = 1;
-//        }
-//
-//        if (key == KeyEvent.VK_UP) {
-//            dy = -1;
-//        }
-//
-//        if (key == KeyEvent.VK_DOWN) {
-//            dy = 1;
-//        }
-//    }
-
     public void fire() {
         missiles.add(new Missile(x +5, y - height/2));
         //System.out.println("Fire!");
     }
 
-//    public void keyReleased(KeyEvent e) {
-//
-//        int key = e.getKeyCode();
-//
-//        if (key == KeyEvent.VK_LEFT) {
-//            dx = 0;
-//        }
-//
-//        if (key == KeyEvent.VK_RIGHT) {
-//            dx = 0;
-//        }
-//
-//        if (key == KeyEvent.VK_UP) {
-//            dy = 0;
-//        }
-//
-//        if (key == KeyEvent.VK_DOWN) {
-//            dy = 0;
-//        }
-//    }
+
 }

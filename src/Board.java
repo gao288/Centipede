@@ -6,13 +6,14 @@ import java.awt.event.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.event.MouseInputListener;
 
-public class Board extends JPanel{
+public class Board extends JPanel implements Commons{
 
     private final int ICRAFT_X = 40;
     private final int ICRAFT_Y = 60;
@@ -23,6 +24,7 @@ public class Board extends JPanel{
     private int my;
     private static boolean ingame = true;
     private boolean mousePressed = false;
+    private List<Alien> centipede;
     public Board() {
 
         initBoard();
@@ -70,6 +72,15 @@ public class Board extends JPanel{
         gameThread.start();
 
     }
+    private void initCentipede(){
+            centipede = new ArrayList<>();
+            for(int i = 0; i< CENTIPEDE_SIZE; i++){
+                if(i == 0){
+                    centipede.add(new Alien(BOARD_WIDTH-Alien.getWidth(),0));
+                }
+            }
+
+    }
 
     private void initBoard() {
         TAdapter mouseadapt = new TAdapter();
@@ -78,8 +89,7 @@ public class Board extends JPanel{
         setBackground(Color.BLACK);
         setDoubleBuffered(true);
         spaceShip = new SpaceShip(ICRAFT_X, ICRAFT_Y);
-
-
+        initCentipede();
 //        timer = new Timer(DELAY, this);
 //        timer.start();
     }
