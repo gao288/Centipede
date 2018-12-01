@@ -1,7 +1,6 @@
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Toolkit;
+import com.sun.xml.internal.ws.assembler.jaxws.MustUnderstandTubeFactory;
+
+import java.awt.*;
 import java.awt.event.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -12,7 +11,7 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.event.MouseInputListener;
-
+import java.util.concurrent.ThreadLocalRandom;
 public class Board extends JPanel implements Commons{
 
     private final int ICRAFT_X = 40;
@@ -25,6 +24,9 @@ public class Board extends JPanel implements Commons{
     private static boolean ingame = true;
     private boolean mousePressed = false;
     private List<Alien> centipede;
+    public int[][] Mushroom_pos;
+    private List<Mushroom> all_Mushroom;
+
     public Board() {
 
         initBoard();
@@ -59,6 +61,7 @@ public class Board extends JPanel implements Commons{
                     updateSpaceShip();
                     updateMissiles();
                     updateCentipede();
+                    checkCollisions();
                     repaint();
                     //System.out.println(mousePressed);
 
@@ -73,10 +76,41 @@ public class Board extends JPanel implements Commons{
         gameThread.start();
 
     }
+
+    private void checkCollisions(){
+        Rectangle r3 = spaceShip.getBounds();
+        for (Alien alien : centipede){
+            Rectangle r2 = alien.getBounds();
+            if(r3.intersects(r2) && alien.visible){
+                spaceShip.setVisible(false);
+                alien.setVisible(false);
+                //ingame = false;
+            }
+        }
+
+        List<Missile> ms = spaceShip.getMissiles();
+        for(Missile m : ms){
+            Rectangle r1 = m.getBounds();
+            for(Alien alien: centipede){
+                Rectangle r2 = alien.getBounds();
+
+                if(r1.intersects(r2) && alien.visible){
+                    m.setVisible(false);
+                    alien.setVisible(false);
+                }
+            }
+        }
+    }
     private void initCentipede(){
             centipede = new ArrayList<>();
             for(int i = 0; i< CENTIPEDE_SIZE; i++){
-                centipede.add(new Alien(BOARD_WIDTH,0));
+                Alien alien = new Alien(BOARD_WIDTH,10);
+                for (int j = 0 ; j < alien.Buffer.length-1;++j){
+                    alien.Buffer[j][0] = BOARD_WIDTH;
+                    alien.Buffer[j][1] = 0;
+                }
+                centipede.add(alien);
+
             }
             Alien alien = centipede.get(0);
             alien.setXY(BOARD_WIDTH-50, 0);
@@ -91,10 +125,38 @@ public class Board extends JPanel implements Commons{
         setDoubleBuffered(true);
         spaceShip = new SpaceShip(ICRAFT_X, ICRAFT_Y);
         initCentipede();
+        initMushroom();
 //        timer = new Timer(DELAY, this);
 //        timer.start();
     }
 
+    private void initMushroom(){
+        int temp;
+        all_Mushroom = new ArrayList<>();
+        boolean found;
+        int [] Mushroom_pos_in_each_level = new int[6];
+        for(int row = 1; row < 25 ; ++row) {  //26 levels
+            int [] array_copy = Mushroom_pos_in_each_level.clone();
+            for (int i = 0; i < 6; i++) { //try to place 6 mushrooms per level
+                temp = ThreadLocalRandom.current().nextInt(2, 23);
+                found = false;
+                for (int j = 0; j < 6; j++) {
+                    if (array_copy[j] == temp + 1 || array_copy[j] == temp - 1) { //check mushroom pos
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (found == false) {
+                    Mushroom_pos_in_each_level[i] = temp;
+                    all_Mushroom.add(new Mushroom(temp*20, row*20));
+                }else{
+                    Mushroom_pos_in_each_level[i] = 0;
+                }
+            }
+        }
+
+    }
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -119,8 +181,13 @@ public class Board extends JPanel implements Commons{
                     missile.getY(), this);
         }
         for (Alien alien : centipede) {
-            g2d.drawImage(alien.getImage(),alien.getX(),alien.getY(),this);
+            if(alien.visible) {
+                g2d.drawImage(alien.getImage(), alien.getX(), alien.getY(), this);
+            };
             //g2d.drawImage(alien.getImage(),250,250,this);
+        }
+        for (Mushroom mushroom : all_Mushroom){
+            g2d.drawImage(mushroom.getImage(), mushroom.getX(), mushroom.getY(),this);
         }
     }
 
@@ -140,15 +207,33 @@ public class Board extends JPanel implements Commons{
             }
         }
     }
+
+
+
     private void updateCentipede(){
-        for(int i = 1; i< centipede.size();i++){
-            Alien alien_after = centipede.get(i-1);
-            Alien alien_forward = centipede.get(i);
-            alien_after.setXY(alien_forward.getX(), alien_forward.getY());
+        for(int i = centipede.size()-1; i > 0;--i){
+            Alien alien_after = centipede.get(i);
+            Alien alien_before = centipede.get(i-1);
+
+            for(int j = alien_after.Buffer.length-1; j>0;--j){
+                alien_after.Buffer[j][0] = alien_after.Buffer[j-1][0];
+                alien_after.Buffer[j][1] = alien_after.Buffer[j-1][1];
+            }
+            alien_after.Buffer[0][0] = alien_before.Buffer[alien_after.Buffer.length-1][0];
+            alien_after.Buffer[0][1] = alien_before.Buffer[alien_after.Buffer.length-1][1];
+
+            alien_after.setXY(alien_after.Buffer[1][0], alien_after.Buffer[1][1]);
         }
         Alien head = centipede.get(0);
         int[] next_pos = next_pos(head);
+        head.Buffer[0][0] = next_pos[0];
+        head.Buffer[0][1] =next_pos[1];
         head.setXY(next_pos[0],next_pos[1]);
+        for(int j = head.Buffer.length-1; j>0;--j){
+            head.Buffer[j][0] = head.Buffer[j-1][0];
+            head.Buffer[j][1] = head.Buffer[j-1][1];
+        }
+
 
     }
 
@@ -156,20 +241,28 @@ public class Board extends JPanel implements Commons{
         int[] ret= {alien.getX(),alien.getY()};
         if(alien.getY() >= PLAYERMAT - alien.getHeight()/2){
             //Reaching the player mat bottom line
-            if(alien.getX()<=(0+alien.getWidth()/2)){
+            if(alien.getX()<=5){
                 alien.direction = 1;
                 ret[0] += alien.speed;
-            }else if(alien.getX()>=(BOARD_WIDTH - alien.getWidth()/2)){
+            }else if(alien.getX()>=(BOARD_WIDTH - alien.getWidth())){
                 alien.direction = 0;
                 ret[0] -= alien.speed;
+            }else{
+                if(alien.direction == 1){
+                    ret[0] += alien.speed;
+                }else{
+                    ret[0] -= alien.speed;
+                }
             }
 
-        }else if(alien.getX()<=(0+alien.getWidth()/2)){
+        }else if(alien.getX()<=5){
             alien.direction = 1;
-            ret[1] += alien.getHeight();
-        }else if(alien.getX()>=(BOARD_WIDTH - alien.getWidth()/2)){
+            ret[1] += alien.height;
+            ret[0] += 5;
+        }else if(alien.getX()>=(BOARD_WIDTH - alien.getWidth())){
             alien.direction = 0;
-            ret[1] += alien.getHeight();
+            ret[1] += alien.height;
+            ret[0] -= 5;
         }else{
             if(alien.direction == 1){
                 ret[0] += alien.speed;
@@ -187,6 +280,17 @@ public class Board extends JPanel implements Commons{
 
 
 
+//    private void drawGameOver(Graphics g) {
+//
+//        String msg = "Game Over";
+//        Font small = new Font("Helvetica", Font.BOLD, 14);
+//        FontMetrics fm = getFontMetrics(small);
+//
+//        g.setColor(Color.white);
+//        g.setFont(small);
+//        g.drawString(msg, (B_WIDTH - fm.stringWidth(msg)) / 2,
+//                B_HEIGHT / 2);
+//    }
     private class TAdapter extends MouseInputAdapter {
 
         @Override
