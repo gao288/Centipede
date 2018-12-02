@@ -5,6 +5,7 @@ import java.util.List;
 public class SpaceShip extends Sprite {
 
     private List<Missile> missiles;
+    public static int health;
 
     public SpaceShip(int x, int y) {
         super(x, y);
@@ -31,7 +32,10 @@ public class SpaceShip extends Sprite {
 
 
     public void fire() {
-        missiles.add(new Missile(x +5, y - height/2));
+        synchronized (missiles){
+            missiles.add(new Missile(x +5, y - height/2));
+        }
+
         //System.out.println("Fire!");
     }
 

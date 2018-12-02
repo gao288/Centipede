@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 
 public class Alien extends Sprite implements Commons{
-    public int health = 2;
+    public int health = 1;
     public int speed = 5;
     public int direction = 0; // 0 means going left
     public int [][]Buffer = new int[6][2];
@@ -16,10 +16,5 @@ public class Alien extends Sprite implements Commons{
         loadImage("src/images/centipede.png");
         getImageDimensions();
     }
-
-    private void move(){
-
-    }
-
 
 }
