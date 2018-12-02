@@ -5,7 +5,7 @@ import java.util.List;
 public class Mushroom extends Sprite implements Commons{
     public int x;
     public int y;
-    private int health = 2;
+    public int health = 2;
     public Mushroom(int x, int y){
         super(x,y);
         initMushroom();

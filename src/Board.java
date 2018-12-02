@@ -14,15 +14,15 @@ import javax.swing.event.MouseInputListener;
 import java.util.concurrent.ThreadLocalRandom;
 public class Board extends JPanel implements Commons{
 
-    private final int ICRAFT_X = 40;
-    private final int ICRAFT_Y = 60;
+    private final int ICRAFT_X = 250;
+    private final int ICRAFT_Y = 700;
     private final int DELAY =   10;
     private Timer timer;
     private SpaceShip spaceShip;
     private int mx;
     private int my;
     private static boolean ingame = true;
-    private boolean mousePressed = false;
+    private boolean mousePressed;
     private List<Alien> centipede;
     public int[][] Mushroom_pos;
     private List<Mushroom> all_Mushroom;
@@ -35,10 +35,14 @@ public class Board extends JPanel implements Commons{
             @Override
             public void run() {
                 while(ingame) {
-                    System.out.println(mousePressed);
-                    boolean check = mousePressed;
+
+                    System.out.println(mousePressed);   //Wired thing happens here.
+                    boolean check = getMousepressed();
                     if (check == true) {
-                        spaceShip.fire();
+                        synchronized (spaceShip){
+                            spaceShip.fire();
+                        }
+
                         try {
                             Thread.sleep(200);
                         } catch (InterruptedException e) {
@@ -54,14 +58,18 @@ public class Board extends JPanel implements Commons{
 
                 while (ingame){
                     try {
-                        Thread.sleep(16);
+                        Thread.sleep(20);
                     }catch (InterruptedException e){
                         e.printStackTrace();
                     }
-                    updateSpaceShip();
+                    synchronized (spaceShip){
+                        updateSpaceShip();
+                    }
                     updateMissiles();
                     updateCentipede();
+                    updateMushroom();
                     checkCollisions();
+                    GameCondition();
                     repaint();
                     //System.out.println(mousePressed);
 
@@ -75,6 +83,17 @@ public class Board extends JPanel implements Commons{
         spriteThread.start();
         gameThread.start();
 
+    }
+    private void GameCondition(){
+        boolean alldead = true;
+        for(Alien alien : centipede){
+            if(alien.visible){
+                alldead = false;
+            }
+        }
+        if(alldead){
+            initCentipede();
+        }
     }
 
     private void checkCollisions(){
@@ -96,16 +115,33 @@ public class Board extends JPanel implements Commons{
 
                 if(r1.intersects(r2) && alien.visible){
                     m.setVisible(false);
-                    alien.setVisible(false);
+                    alien.health -= 1;
+                    if(alien.health == 0){
+                        alien.setVisible(false);
+                    }
                 }
             }
+
+            for(Mushroom mushroom: all_Mushroom){
+                Rectangle r2 = mushroom.getBounds();
+                if(r1.intersects(r2) && mushroom.visible){
+                    m.setVisible(false);
+                    mushroom.health -= 1;
+                    if(mushroom.health == 0){
+                        mushroom.setVisible(false);
+                    }
+                }
+
+            }
         }
+
+
     }
     private void initCentipede(){
             centipede = new ArrayList<>();
             for(int i = 0; i< CENTIPEDE_SIZE; i++){
                 Alien alien = new Alien(BOARD_WIDTH,10);
-                for (int j = 0 ; j < alien.Buffer.length-1;++j){
+                for (int j = 0 ; j < alien.Buffer.length;++j){
                     alien.Buffer[j][0] = BOARD_WIDTH;
                     alien.Buffer[j][1] = 0;
                 }
@@ -208,7 +244,19 @@ public class Board extends JPanel implements Commons{
         }
     }
 
+    private void updateMushroom(){
+        for(int i = 0; i < all_Mushroom.size(); i++){
+            Mushroom mus = all_Mushroom.get(i);
+            if(!mus.isVisible()){
+                all_Mushroom.remove(i);
+            }
 
+        }
+    }
+
+    private void updateSpider(){
+
+    }
 
     private void updateCentipede(){
         for(int i = centipede.size()-1; i > 0;--i){
@@ -239,6 +287,7 @@ public class Board extends JPanel implements Commons{
 
     private int[] next_pos(Alien alien){
         int[] ret= {alien.getX(),alien.getY()};
+        boolean intersect = false;
         if(alien.getY() >= PLAYERMAT - alien.getHeight()/2){
             //Reaching the player mat bottom line
             if(alien.getX()<=5){
@@ -264,10 +313,23 @@ public class Board extends JPanel implements Commons{
             ret[1] += alien.height;
             ret[0] -= 5;
         }else{
-            if(alien.direction == 1){
-                ret[0] += alien.speed;
+            intersect = false;
+            for (Mushroom mushroom : all_Mushroom){
+                Rectangle r3 = mushroom.getBounds();
+                Rectangle r2 = alien.getBounds();
+                if(r3.intersects(r2)){
+                    intersect = true;
+                }
+            }
+            if(!intersect) {
+                if (alien.direction == 1) {
+                    ret[0] += alien.speed;
+                } else {
+                    ret[0] -= alien.speed;
+                }
             }else{
-                ret[0] -= alien.speed;
+                ret[1] += alien.height;
+                alien.direction = alien.direction == 1? 0 : 1;
             }
         }
 
@@ -278,6 +340,12 @@ public class Board extends JPanel implements Commons{
         spaceShip.mousemove(mx,my);
     }
 
+    private boolean getMousepressed(){
+        return mousePressed;
+    }
+    private void setMousePressed(boolean r){
+        mousePressed = r;
+    }
 
 
 //    private void drawGameOver(Graphics g) {
@@ -295,7 +363,7 @@ public class Board extends JPanel implements Commons{
 
         @Override
         public void mousePressed(MouseEvent e){
-            mousePressed = true;
+            setMousePressed(true);
         }
         @Override
         public void mouseClicked(MouseEvent e){
@@ -304,7 +372,7 @@ public class Board extends JPanel implements Commons{
         }
         @Override
         public void mouseReleased(MouseEvent e){
-            mousePressed = false;
+            setMousePressed(false);
         }
         @Override
         public void mouseEntered(MouseEvent e){
@@ -316,10 +384,10 @@ public class Board extends JPanel implements Commons{
         }
         @Override
         public void mouseDragged(MouseEvent e){
-            mousePressed = true;
             mx = e.getX();
             my = e.getY();
             e.consume();
+            setMousePressed(true);
 
 
 
